@@ -1,7 +1,7 @@
 __author__ = "Andrew Szymanski (andrew.szymanski@newsint.co.uk)"
 __version__ = "0.1.0"
 
-"""Our various boto wrappers
+"""boto wrappers
 """
 
 from boto.s3.connection import S3Connection
@@ -12,7 +12,7 @@ import os
 import inspect
 
 
-class DaBotoEC2(object):
+class BotoEC2(object):
     """Our boto EC2 wrapper
     """    
     def __init__(self, *args, **kwargs):
@@ -31,7 +31,7 @@ class DaBotoEC2(object):
             self.logger = logging.getLogger('')
         # initial log entry
         self.logger.setLevel(self.log_level)
-        self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, __file__,__version__))
+        self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
 
     def connect(self):
         """Create connection object and attempt connection

@@ -13,6 +13,7 @@ import urllib2
 import os
 import inspect
 import helpers.boto_helper
+import helpers.cm_helper
 
 LOG_INDENT = "  "
 console = logging.StreamHandler()
@@ -34,7 +35,7 @@ class Manager(object):
             self.logger = logger
         # initial log entry
         self.logger.setLevel(logger.getEffectiveLevel())
-        self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, __file__,__version__))
+        self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
         
         # initialize all vars to avoid "undeclared"
         # and to have a nice neat list of all member vars
@@ -72,8 +73,11 @@ class Manager(object):
             raise Exception("aws_region not defined in config file: [%s]" % cdh_config_file)
         logger.info("aws region: [%s]" % aws_region)
         
-        # check if boto config file exists
+        # config boto
+        cdh_ec2 = helpers.boto_helper.BotoEC2(logger=logger,aws_region=aws_region)
         
+        # Cloudera Manager API
+        cdh_cm = helpers.cm_helper.Manager(logger=logger,cfg=cdh_config_file)
                     
 
 
