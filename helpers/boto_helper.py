@@ -37,17 +37,8 @@ class DaBotoEC2(object):
         """Create connection object and attempt connection
         """
         self.logger.debug("Attempting to connect to EC2...")
-        self.logger.debug("looking up ${AWS_REGION} to connect to...")
         # establish region
         aws_region = None
-        try: 
-            Variable.load_lookup()
-            aws_region = Variable.LOOKUP["${AWS_REGION}"]
-        except KeyError, e:
-            errMsg = "One of variables JENK_URL_ROOT,JENK_USER,JENK_TOKEN_FILE could not be resolved"
-            logger.error(errMsg)
-            return False
-        self.logger.debug("${AWS_REGION} = [%s]" % aws_region)
         
         # and now attempt boto connect
         self.__is_connected__ = False

@@ -46,6 +46,7 @@ class Manager(object):
         """ Grab and validate all input params
         Will return True if successful, False if critical validation failed
         """
+        self.logger.info("configuring helpers...")
         self.logger.debug("%s %s::%s starting..." %  (LOG_INDENT, self.__class__.__name__ , inspect.stack()[0][3]))             
 
 
@@ -55,7 +56,7 @@ class Manager(object):
             raise Exception("cm_config file not specified")
         logger.debug("specified cm config file: [%s]" % cdh_config_file)
         cdh_config_file = os.path.expandvars(cdh_config_file)
-        logger.info("reading config file: [%s]..." % cdh_config_file)
+        logger.debug("reading config file: [%s]..." % cdh_config_file)
         
         # read Cloudera Manager config
         try:
@@ -65,7 +66,11 @@ class Manager(object):
                    self.cdh_config[key] = val
         except Exception, e:
             raise Exception("Could not read config file: [%s], error: [%s]" % (cdh_config_file, e))
-        logger.info("reading config file: [%s] DONE" % cdh_config_file)
+        aws_region = self.cdh_config.get('aws_region', None)
+        aws_region = aws_region.strip()
+        if not aws_region:
+            raise Exception("aws_region not defined in config file: [%s]" % cdh_config_file)
+        logger.info("aws region: [%s]" % aws_region)
         
         # check if boto config file exists
         
@@ -178,7 +183,7 @@ def mainRun(opts, parser):
 # tested / use cases:
 # ./cli.py
 # ./cli.py  --debug=Y
-# ./cli/cli.py -d Y -c $HOME/.passwords/cm.config
+# alias a='cli/cli.py -d Y -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
 
 
 def main(argv=None):
