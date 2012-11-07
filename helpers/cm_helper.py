@@ -9,6 +9,7 @@ import logging
 import os
 import inspect
 
+LOG_INDENT = "  "        # to prettify logs
 
 class Manager(object):
     """Our boto EC2 wrapper
@@ -30,6 +31,46 @@ class Manager(object):
         # initial log entry
         self.logger.setLevel(self.log_level)
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
+        # initialize variables - so all are listed here for convenience
+        self.dict_config = {}   # dictionary, see cdh_manager.cfg example
+        
+
+        # 
+
+
+    def configure(self, cm_config=None):
+        """Read in configuration file 
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        if not cm_config:
+            raise Exception("cm_config parameter (config file location) not specified.")
+                
+        cm_config = os.path.expandvars(cm_config)
+        self.logger.debug("%s reading config file: [%s]..." % (LOG_INDENT, cm_config))
+        
+        new_dict = {}
+        # read Cloudera Manager config
+        try:
+            with open(cm_config) as f:
+                for line in f:
+                   (key, val) = line.split('=')
+                   key = key.strip()
+                   val = val.strip()
+                   new_dict[key] = val
+        except Exception, e:
+            raise Exception("Could not read config file: [%s], error: [%s]" % (cm_config, e))
+        
+        # validate all params
+        keys = ["aws_region", "cm_host", "username", "password"]
+        for key in keys:
+            value = new_dict.get(key, None)
+            if not value:
+                raise Exception("'%s' not defined in config file: [%s]" % (key, cm_config))
+        
+        self.dict_config = new_dict
+        self.logger.info("%s aws region: [%s]" % (LOG_INDENT, self.dict_config['aws_region']))
+
+
 
     def connect(self):
         """Create connection object and attempt connection

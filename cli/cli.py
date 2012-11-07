@@ -47,37 +47,23 @@ class Manager(object):
         """ Grab and validate all input params
         Will return True if successful, False if critical validation failed
         """
-        self.logger.info("configuring helpers...")
-        self.logger.debug("%s %s::%s starting..." %  (LOG_INDENT, self.__class__.__name__ , inspect.stack()[0][3]))             
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        self.logger.info("%s configuring helpers..." % LOG_INDENT)
 
 
         # read Cloudera Manager config / credential file
         cdh_config_file = kwargs.get('cm_config', None)
-        if not cdh_config_file:
-            raise Exception("cm_config file not specified")
-        logger.debug("specified cm config file: [%s]" % cdh_config_file)
-        cdh_config_file = os.path.expandvars(cdh_config_file)
-        logger.debug("reading config file: [%s]..." % cdh_config_file)
-        
-        # read Cloudera Manager config
+        # Cloudera Manager API
+        cdh_cm = helpers.cm_helper.Manager(logger=logger)
         try:
-            with open(cdh_config_file) as f:
-                for line in f:
-                   (key, val) = line.split('=')
-                   self.cdh_config[key] = val
+            cdh_cm.configure(cm_config=cdh_config_file)
         except Exception, e:
-            raise Exception("Could not read config file: [%s], error: [%s]" % (cdh_config_file, e))
-        aws_region = self.cdh_config.get('aws_region', None)
-        aws_region = aws_region.strip()
-        if not aws_region:
-            raise Exception("aws_region not defined in config file: [%s]" % cdh_config_file)
-        logger.info("aws region: [%s]" % aws_region)
+            raise Exception("error while trying to configure Cloudera Manager helper: [%s]" % e)
+        
         
         # config boto
-        cdh_ec2 = helpers.boto_helper.BotoEC2(logger=logger,aws_region=aws_region)
+        #cdh_ec2 = helpers.boto_helper.BotoEC2(logger=logger,aws_region=aws_region)
         
-        # Cloudera Manager API
-        cdh_cm = helpers.cm_helper.Manager(logger=logger,cfg=cdh_config_file)
                     
 
 
