@@ -9,7 +9,13 @@ import logging
 import os
 import inspect
 
+# constants
 LOG_INDENT = "  "        # to prettify logs
+# config keys
+HOSTNAME = "hostname"
+USERNAME = "username"
+AWS_REGION = "aws_region"
+PASSWORD = "password"
 
 class Manager(object):
     """Our boto EC2 wrapper
@@ -18,7 +24,6 @@ class Manager(object):
         """Create an object and attach or initialize logger
         """
         self.__is_connected__ = False
-        self.conn = None
         self.logger = kwargs.get('logger',None)
         self.log_level = kwargs.get('log_level',logging.DEBUG)
         if ( self.logger is None ):
@@ -33,6 +38,7 @@ class Manager(object):
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
         # initialize variables - so all are listed here for convenience
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
+        self.api = None
         
 
         # 
@@ -61,38 +67,66 @@ class Manager(object):
             raise Exception("Could not read config file: [%s], error: [%s]" % (cm_config, e))
         
         # validate all params
-        keys = ["aws_region", "cm_host", "username", "password"]
+        keys = [HOSTNAME, USERNAME, PASSWORD, AWS_REGION]
         for key in keys:
             value = new_dict.get(key, None)
             if not value:
                 raise Exception("'%s' not defined in config file: [%s]" % (key, cm_config))
         
         self.dict_config = new_dict
-        self.logger.info("%s aws region: [%s]" % (LOG_INDENT, self.dict_config['aws_region']))
+        self.logger.info("%s aws region: [%s]" % (LOG_INDENT, self.dict_config[AWS_REGION]))
+        
+        # and create a "connection" object
+        #api = ApiResource(cm_host, username="admin", password="admin")
+        try:
+            self.connect()
+        except Exception, e:
+            raise Exception("failed to connect to CM manager on: [%s], error: [%s]" % (self.dict_config[HOSTNAME], e))
+        
 
 
 
     def connect(self):
-        """Create connection object and attempt connection
+        """Create "connection" object - i.e. CM API object
         """
-        self.logger.debug("Attempting to connect to EC2...")
-        # establish region
-        aws_region = None
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        self.logger.info("connecting to CM on: [%s]" % self.dict_config[HOSTNAME])
         
-        # and now attempt boto connect
+        # and now create api object
         self.__is_connected__ = False
-#        try:
-#            #self.conn = EC2Connection()
-#            self.logger.setLevel(logging.ERROR)
-#            self.conn = ec2.connect_to_region(aws_region)  # TODO - get region from vars
-#            self.logger.setLevel(self.log_level)
-#            self.__is_connected__ = True
-#            self.logger.info("Connected to EC2")
-#        except Exception, e:
-#            self.logger.error("Failed to connect to EC2: [%s]" % e)
+        try:
+            self.api = ApiResource(self.dict_config[HOSTNAME], username=self.dict_config[USERNAME], password=self.dict_config[PASSWORD])
+        except Exception, e:
+            raise Exception("Failed to connect to CM on [%s], error: [%s]" % (self.dict_config[HOSTNAME],e))
             
-        return self.__is_connected__
+        #
+        if not self.api:
+            raise Exception("Failed to connect to CM on [%s]" % (self.dict_config[HOSTNAME]))
 
+        # the above doesn't mean anything - try connection to make sure all is well
+        clusters = list()
+        try:
+            clusters = self.get_clusters()
+        except Exception, e:
+            raise Exception("Failed to connect to CM on [%s], error: [%s]" % (self.dict_config[HOSTNAME],e))
+
+
+        # print clusters
+        #self.logger.info("Connection OK, clusters: %s" % ",".join(clusters))
+
+
+        self.__is_connected__ = True
+
+
+    def get_clusters(self):
+        """ get list of clusters
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        list_clusters = self.api.get_all_clusters()   
+        print list_clusters
+        return list_clusters  
+        
+        
 
     def get_instances(self):
         """Create connection object and attempt connection
