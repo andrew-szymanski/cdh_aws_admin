@@ -133,7 +133,7 @@ def mainRun(opts, parser):
         logger.debug("logging level activated: [DEBUG]")
     logger.debug("%s starting..." % inspect.stack()[0][3])
     
-    logger.debug("creating publisher object...") 
+    logger.debug("creating CLI object...") 
     json_publisher = Publisher(logger=logger)
     logger.debug("setting up publisher...") 
     try:
@@ -166,13 +166,13 @@ def main(argv=None):
     logger.debug("main starting...")
 
     argv = argv or sys.argv
-    parser = OptionParser(description="Vote test harness",
+    parser = OptionParser(description="Cloudera Manager on AWS management tools",
                       version=__version__,
                       usage="usage: %prog [options]")
     # cat options
     cat_options = OptionGroup(parser, "options")
     cat_options.add_option("-d", "--debug", help="debug logging, specify any value to enable debug, omit this param to disable, example: --debug=False", default=True)
-    cat_options.add_option("-c", "--cdh_config", help="Cloudera Manager host, user and password, KEY=VALUE format, example: -c $HOME/.passwords/cdh_manager.config", default=None)
+    cat_options.add_option("-c", "--cm_config", help="Cloudera Manager config containing host, user and password, KEY=VALUE format, example: -c $HOME/.passwords/cdh_manager.config", default=None)
     cat_options.add_option("-b", "--boto_config", help="boto config file, in format defined by boto, env vars will be resolved, example: -b $HOME/.passwords/credentials.boto", default=None)
     parser.add_option_group(cat_options)
 
