@@ -12,6 +12,7 @@ import urllib
 import urllib2
 import os
 import inspect
+import helpers.boto_helper
 
 LOG_INDENT = "  "
 console = logging.StreamHandler()
@@ -65,6 +66,9 @@ class Manager(object):
         except Exception, e:
             raise Exception("Could not read config file: [%s], error: [%s]" % (cdh_config_file, e))
         logger.info("reading config file: [%s] DONE" % cdh_config_file)
+        
+        # check if boto config file exists
+        
                     
 
 
