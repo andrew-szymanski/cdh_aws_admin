@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = "Andrew Szymanski ()"
-__version__ = "1.1"
+__version__ = "0.1"
 
 """Post vote test harness
 """
@@ -21,7 +21,7 @@ logging.getLogger(__name__).addHandler(console)
 logger = logging.getLogger(__name__)
 
 
-class Publisher(object):
+class Manager(object):
     """ Main class which does the whole workflow
     """
     def __init__(self, *args, **kwargs):
@@ -37,10 +37,9 @@ class Publisher(object):
         
         # initialize all vars to avoid "undeclared"
         # and to have a nice neat list of all member vars
-        self.api_url = None
-        self.json_file = None
-        self.json_string = None
-        self.dry_run = False
+        self.cdh_host = None
+        self.cdh_user = None
+        self.cdh_password = None
         
 
 
@@ -50,9 +49,18 @@ class Publisher(object):
         """
         self.logger.debug("%s %s::%s starting..." %  (LOG_INDENT, self.__class__.__name__ , inspect.stack()[0][3]))             
 
-        self.dry_run = kwargs.get('dry_run',False)   
+
+        # read Cloudera Manager config / credential file
+        cdh_config_file = kwargs.get('cm_config', None)
+        if not cdh_config_file:
+            raise Exception("cm_config file not specified")
+
+
+
+
+
         # url
-        self.api_url = kwargs.get('api_url',None)     
+        self.cdh_host = kwargs.get('api_url',None)     
         if not self.api_url:
             raise Exception("api_url not specified")
         self.logger.debug("%s api_url: [%s]" % (LOG_INDENT, self.api_url))
@@ -134,21 +142,15 @@ def mainRun(opts, parser):
     logger.debug("%s starting..." % inspect.stack()[0][3])
     
     logger.debug("creating CLI object...") 
-    json_publisher = Publisher(logger=logger)
-    logger.debug("setting up publisher...") 
+    cdh_manager = Manager(logger=logger)
+    logger.debug("setting up Manager...") 
     try:
-        json_publisher.configure(**opts.__dict__)
+        cdh_manager.configure(**opts.__dict__)
     except Exception, e:
+        logger.error("%s" % e)
         parser.print_help()
-        sys.exit("ERROR: %s" % e)
-            
-    logger.debug("POSTing json...")   
-    try:
-        json_publisher.publish()
-    except Exception, e:
-        logger.error("ERROR: %s" % e)
         sys.exit(1)
-    
+            
     logger.debug("all done")   
 
 
@@ -156,9 +158,8 @@ def mainRun(opts, parser):
 # manual testing min setup:
 
 # tested / use cases:
-# ./vote.py
-# ./vote.py  --debug=Y
-# ./post_tracking_events.py --debug=Y --api_url=http://hostaname/api/...  --json_file=./tracking_data_sample.json
+# ./cli.py
+# ./cli.py  --debug=Y
 
 
 def main(argv=None):
