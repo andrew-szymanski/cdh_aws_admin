@@ -54,35 +54,38 @@ class Manager(object):
         cdh_config_file = kwargs.get('cm_config', None)
         if not cdh_config_file:
             raise Exception("cm_config file not specified")
+        logger.debug("specified cm config file: [%s]" % cdh_config_file)
+        cdh_config_file = os.path.expandvars(cdh_config_file)
+        logger.info("config file: [%s]" % cdh_config_file)
 
 
 
 
 
-        # url
-        self.cdh_host = kwargs.get('api_url',None)     
-        if not self.api_url:
-            raise Exception("api_url not specified")
-        self.logger.debug("%s api_url: [%s]" % (LOG_INDENT, self.api_url))
-        
-        # json_file
-        self.json_file = kwargs.get('json_file',None)     
-        if self.json_file:
-            # validate
-            self.logger.debug("%s retrieving JSON from file: [%s]" % (2*LOG_INDENT, self.json_file))
-            try:
-                with open(self.json_file) as f: 
-                    self.json_string = f.read()
-            except IOError as e:
-                raise Exception("json_file could not be read: [%s], exception: [%s]" % (self.json_file, e) )
-            self.logger.debug("%s retrieved JSON: [%s]" % (2*LOG_INDENT, self.json_string))
-            return
-        # json_string - we will only get here if json_file not specified
-        self.logger.debug("%s json_file not specified, trying json_string..." % (LOG_INDENT))
-        self.json_string = kwargs.get('json_string',None)   
-        if not self.json_string or len(self.json_string) < 1:
-            raise Exception("You must specify either json_file or json_string")
-        self.logger.debug("%s json_string: [%s]" % (LOG_INDENT, self.json_string))
+#        # url
+#        self.cdh_host = kwargs.get('api_url',None)     
+#        if not self.api_url:
+#            raise Exception("api_url not specified")
+#        self.logger.debug("%s api_url: [%s]" % (LOG_INDENT, self.api_url))
+#        
+#        # json_file
+#        self.json_file = kwargs.get('json_file',None)     
+#        if self.json_file:
+#            # validate
+#            self.logger.debug("%s retrieving JSON from file: [%s]" % (2*LOG_INDENT, self.json_file))
+#            try:
+#                with open(self.json_file) as f: 
+#                    self.json_string = f.read()
+#            except IOError as e:
+#                raise Exception("json_file could not be read: [%s], exception: [%s]" % (self.json_file, e) )
+#            self.logger.debug("%s retrieved JSON: [%s]" % (2*LOG_INDENT, self.json_string))
+#            return
+#        # json_string - we will only get here if json_file not specified
+#        self.logger.debug("%s json_file not specified, trying json_string..." % (LOG_INDENT))
+#        self.json_string = kwargs.get('json_string',None)   
+#        if not self.json_string or len(self.json_string) < 1:
+#            raise Exception("You must specify either json_file or json_string")
+#        self.logger.debug("%s json_string: [%s]" % (LOG_INDENT, self.json_string))
 
 
 
@@ -136,10 +139,12 @@ class Manager(object):
 #                      **********************************************************
 def mainRun(opts, parser):
     # set log level - we might control it by some option in the future
-    if ( opts.debug == True ):
+    if ( opts.debug ):
         logger.setLevel("DEBUG")
         logger.debug("logging level activated: [DEBUG]")
-    logger.debug("%s starting..." % inspect.stack()[0][3])
+    else:
+        logger.setLevel("INFO")
+    logger.info("%s starting..." % inspect.stack()[0][3])
     
     logger.debug("creating CLI object...") 
     cdh_manager = Manager(logger=logger)
@@ -172,7 +177,7 @@ def main(argv=None):
                       usage="usage: %prog [options]")
     # cat options
     cat_options = OptionGroup(parser, "options")
-    cat_options.add_option("-d", "--debug", help="debug logging, specify any value to enable debug, omit this param to disable, example: --debug=False", default=True)
+    cat_options.add_option("-d", "--debug", help="debug logging, specify any value to enable debug, omit this param to disable, example: --debug=False", default=False)
     cat_options.add_option("-c", "--cm_config", help="Cloudera Manager config containing host, user and password, KEY=VALUE format, example: -c $HOME/.passwords/cdh_manager.config", default=None)
     cat_options.add_option("-b", "--boto_config", help="boto config file, in format defined by boto, env vars will be resolved, example: -b $HOME/.passwords/credentials.boto", default=None)
     parser.add_option_group(cat_options)
