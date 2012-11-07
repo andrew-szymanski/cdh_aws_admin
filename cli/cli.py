@@ -37,9 +37,7 @@ class Manager(object):
         
         # initialize all vars to avoid "undeclared"
         # and to have a nice neat list of all member vars
-        self.cdh_host = None
-        self.cdh_user = None
-        self.cdh_password = None
+        self.cdh_config = {}
         
 
 
@@ -56,7 +54,18 @@ class Manager(object):
             raise Exception("cm_config file not specified")
         logger.debug("specified cm config file: [%s]" % cdh_config_file)
         cdh_config_file = os.path.expandvars(cdh_config_file)
-        logger.info("config file: [%s]" % cdh_config_file)
+        logger.info("reading config file: [%s]..." % cdh_config_file)
+        
+        # read Cloudera Manager config
+        try:
+            with open(cdh_config_file) as f:
+                for line in f:
+                   (key, val) = line.split('=')
+                   self.cdh_config[key] = val
+        except Exception, e:
+            raise Exception("Could not read config file: [%s], error: [%s]" % (cdh_config_file, e))
+        logger.info("reading config file: [%s] DONE" % cdh_config_file)
+                    
 
 
 
@@ -165,6 +174,7 @@ def mainRun(opts, parser):
 # tested / use cases:
 # ./cli.py
 # ./cli.py  --debug=Y
+# ./cli/cli.py -d Y -c $HOME/.passwords/cm.config
 
 
 def main(argv=None):
