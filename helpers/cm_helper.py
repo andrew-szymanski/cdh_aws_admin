@@ -112,8 +112,9 @@ class Manager(object):
 
 
         # print clusters
-        #self.logger.info("Connection OK, clusters: %s" % ",".join(clusters))
-
+        self.logger.info("Connection OK, clusters:")
+        for cluster in clusters:
+            self.logger.info("%s name: [%s], version: [%s]" % (LOG_INDENT, cluster.name, cluster.version) )
 
         self.__is_connected__ = True
 
@@ -123,8 +124,6 @@ class Manager(object):
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
         list_clusters = self.api.get_all_clusters()
-        for cluster in list_clusters:   
-            print cluster.__dict__
         return list_clusters  
         
         
