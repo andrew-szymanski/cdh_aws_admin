@@ -122,8 +122,9 @@ class Manager(object):
         """ get list of clusters
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-        list_clusters = self.api.get_all_clusters()   
-        print list_clusters
+        list_clusters = self.api.get_all_clusters()
+        for cluster in list_clusters:   
+            print cluster.__dict__
         return list_clusters  
         
         
