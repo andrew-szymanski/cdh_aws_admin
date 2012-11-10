@@ -39,7 +39,8 @@ class Manager(object):
         
         # initialize all vars to avoid "undeclared"
         # and to have a nice neat list of all member vars
-        self.cdh_config = {}
+        self.cm_helper = None
+        self.ec2_helper = None
         
 
 
@@ -48,52 +49,27 @@ class Manager(object):
         Will return True if successful, False if critical validation failed
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-        self.logger.info("%s configuring helpers..." % LOG_INDENT)
 
 
         # read Cloudera Manager config / credential file
+        self.logger.info("configuring Cloudera Manager helper...")
         cdh_config_file = kwargs.get('cm_config', None)
         # Cloudera Manager API
-        cdh_cm = helpers.cm_helper.Manager(logger=logger)
+        self.cm_helper = helpers.cm_helper.ClouderaManagerHelper(logger=logger)
         try:
-            cdh_cm.configure(cm_config=cdh_config_file)
+            self.cm_helper.configure(cm_config=cdh_config_file)
         except Exception, e:
             raise Exception("error while trying to configure Cloudera Manager helper: [%s]" % e)
         
-        
         # config boto
-        #cdh_ec2 = helpers.boto_helper.BotoEC2(logger=logger,aws_region=aws_region)
+        aws_region = self.cm_helper.get_aws_region()
+        self.logger.info("configuring Boto helper for region: [%s]..." % (aws_region))
+        self.logger.debug("%s creating object..." % (LOG_INDENT))
+        self.ec2_helper = helpers.boto_helper.BotoHelperEC2(logger=logger)
+        cdh_config_file = kwargs.get('cm_config', None)
+        #self.ec2_helper = helpers.boto_helper.BotoHelperEC2(logger=logger,aws_region=aws_region)
         
-                    
-
-
-
-
-
-#        # url
-#        self.cdh_host = kwargs.get('api_url',None)     
-#        if not self.api_url:
-#            raise Exception("api_url not specified")
-#        self.logger.debug("%s api_url: [%s]" % (LOG_INDENT, self.api_url))
-#        
-#        # json_file
-#        self.json_file = kwargs.get('json_file',None)     
-#        if self.json_file:
-#            # validate
-#            self.logger.debug("%s retrieving JSON from file: [%s]" % (2*LOG_INDENT, self.json_file))
-#            try:
-#                with open(self.json_file) as f: 
-#                    self.json_string = f.read()
-#            except IOError as e:
-#                raise Exception("json_file could not be read: [%s], exception: [%s]" % (self.json_file, e) )
-#            self.logger.debug("%s retrieved JSON: [%s]" % (2*LOG_INDENT, self.json_string))
-#            return
-#        # json_string - we will only get here if json_file not specified
-#        self.logger.debug("%s json_file not specified, trying json_string..." % (LOG_INDENT))
-#        self.json_string = kwargs.get('json_string',None)   
-#        if not self.json_string or len(self.json_string) < 1:
-#            raise Exception("You must specify either json_file or json_string")
-#        self.logger.debug("%s json_string: [%s]" % (LOG_INDENT, self.json_string))
+        
 
 
 

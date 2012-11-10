@@ -8,3 +8,17 @@ install from source
 =============
 cd $SOURCE
 sudo pip install -e .
+
+
+Boto config
+==============
+http://code.google.com/p/boto/wiki/BotoConfig
+
+either:
+
+   export BOTO_CONFIG=$HOME/.passwords/boto.cfg
+   ./cli/cli.py 
+
+or:
+
+   ./cli/cli.py -b $HOME/.passwords/boto.cfg

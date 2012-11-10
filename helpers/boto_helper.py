@@ -12,7 +12,7 @@ import os
 import inspect
 
 
-class BotoEC2(object):
+class BotoHelperEC2(object):
     """Our boto EC2 wrapper
     """    
     def __init__(self, *args, **kwargs):

@@ -17,7 +17,7 @@ USERNAME = "username"
 AWS_REGION = "aws_region"
 PASSWORD = "password"
 
-class Manager(object):
+class ClouderaManagerHelper(object):
     """Our boto EC2 wrapper
     """    
     def __init__(self, *args, **kwargs):
@@ -126,6 +126,13 @@ class Manager(object):
         list_clusters = self.api.get_all_clusters()
         return list_clusters  
         
+
+    def get_aws_region(self):
+        """ get region (specified in config file)
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        aws_region = self.dict_config[AWS_REGION]
+        return aws_region  
         
 
     def get_instances(self):
