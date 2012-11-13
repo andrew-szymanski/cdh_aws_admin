@@ -45,12 +45,12 @@ class BotoHelperEC2(object):
         try:
             #self.conn = EC2Connection()
             self.logger.setLevel(logging.ERROR)
-            self.conn = ec2.connect_to_region(aws_region)  # TODO - get region from vars
+            self.conn = ec2.connect_to_region(aws_region)  
             self.logger.setLevel(self.log_level)
             self.__is_connected__ = True
             self.logger.info("Connected to EC2")
         except Exception, e:
-            self.logger.error("Failed to connect to EC2: [%s]" % e)
+            raise Exception("Failed to connect to EC2: [%s]" % e)
             
         return self.__is_connected__
 

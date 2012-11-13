@@ -70,6 +70,12 @@ class Manager(object):
             raise Exception("error while trying to configure CdhAwsHelper: [%s]" % e)
         
         
+        # Check connection to CDH CM
+        self.logger.info("testing connection to AWS boto...")
+        try:
+            self.cdh_aws_helper.boto_connect()
+        except Exception, e:
+            raise Exception("error while trying to configure CdhAwsHelper: [%s]" % e)
         
 
         

@@ -42,6 +42,7 @@ class CdhAwsHelper(object):
         # initialize variables - so all are listed here for convenience
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
         self.cm_api = None
+        self.boto_ec2 = None
         
 
     def configure(self, cfg=None):
@@ -78,20 +79,6 @@ class CdhAwsHelper(object):
         self.logger.info("%s aws region: [%s]" % (LOG_INDENT, self.dict_config[AWS_REGION]))
         self.logger.info("%s boto cfg: [%s]" % (LOG_INDENT, self.dict_config[AWS_BOTO_CFG]))
         
-        # check connection to CM API
-#        try:
-#            self.connect()
-#        except Exception, e:
-#            raise Exception("failed to connect to CM manager on: [%s], error: [%s]" % (self.dict_config[CM_HOSTNAME], e))
-        
-        #api = ApiResource(cm_host, username="admin", password="admin")
-#        try:
-#            self.connect()
-#        except Exception, e:
-#            raise Exception("failed to connect to CM manager on: [%s], error: [%s]" % (self.dict_config[CM_HOSTNAME], e))
-#        
-
-
 
     def cm_connect(self):
         """Create "connection" object - i.e. CM API object
@@ -124,6 +111,23 @@ class CdhAwsHelper(object):
             self.logger.info("%s name: [%s], version: [%s]" % (LOG_INDENT, cluster.name, cluster.version) )
 
         self.__is_connected__ = True
+
+    def boto_connect(self):
+        """Create "connection" object - i.e. CM API object
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        self.logger.info("connecting to boto, region: [%s]" % self.dict_config[AWS_REGION])
+        
+        self.boto_ec2 = boto_helper.BotoHelperEC2(logger=self.logger,aws_region=self.dict_config[AWS_REGION])
+        if not self.boto_ec2:
+            raise Exception("Failed to create boto object, cfg: [%s]" % (self.dict_config[AWS_BOTO_CFG],e))
+
+        try:
+            self.boto_ec2.connect()
+        except Exception, e:
+            raise Exception("Failed to connect to boto, error: [%s]" % (e))
+
+
 
 
     def get_clusters(self):
