@@ -60,11 +60,14 @@ class CdhAwsHelper(object):
         try:
             with open(cfg) as f:
                 for line in f:
-                   (key, val) = line.split('=')
-                   key = key.strip()
-                   val = val.strip()
-                   val = os.path.expandvars(val)
-                   new_dict[key] = val
+                    line = line.strip()
+                    if line.startswith("#"):           # comment line
+                        continue
+                    (key, val) = line.split('=')
+                    key = key.strip()
+                    val = val.strip()
+                    val = os.path.expandvars(val)
+                    new_dict[key] = val
         except Exception, e:
             raise Exception("Could not read config file: [%s], error: [%s]" % (cfg, e))
         
@@ -123,7 +126,9 @@ class CdhAwsHelper(object):
             raise Exception("Failed to create boto object, cfg: [%s]" % (self.dict_config[AWS_BOTO_CFG],e))
 
         try:
-            self.boto_ec2.connect()
+            self.boto_ec2.connect(aws_boto_cfg=self.dict_config[AWS_BOTO_CFG], aws_region=self.dict_config[AWS_REGION])
+            #self.boto_ec2.get_region()
+            self.boto_ec2.get_instances()
         except Exception, e:
             raise Exception("Failed to connect to boto, error: [%s]" % (e))
 

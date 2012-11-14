@@ -7,6 +7,7 @@ __version__ = "0.1.0"
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto import ec2
+from boto import config
 import logging
 import os
 import inspect
@@ -18,7 +19,6 @@ class BotoHelperEC2(object):
     def __init__(self, *args, **kwargs):
         """Create an object and attach or initialize logger
         """
-        self.__is_connected__ = False
         self.conn = None
         self.logger = kwargs.get('logger',None)
         self.log_level = kwargs.get('log_level',logging.DEBUG)
@@ -29,37 +29,58 @@ class BotoHelperEC2(object):
             console.setFormatter(formatter)
             logging.getLogger('').addHandler(console)
             self.logger = logging.getLogger('')
+            self.logger.setLevel(self.log_level)
         # initial log entry
-        self.logger.setLevel(self.log_level)
+        self.log_level = self.logger.getEffectiveLevel()
+        self.region = None
+        self.cfg_file = None
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
 
-    def connect(self):
+    def connect(self, *args, **kwargs):
         """Create connection object and attempt connection
         """
-        self.logger.debug("Attempting to connect to EC2...")
-        # establish region
-        aws_region = None
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
         
-        # and now attempt boto connect
-        self.__is_connected__ = False
+        aws_boto_cfg = kwargs.get('aws_boto_cfg',None)
+        self.logger.debug("%s: [%s]" % ("aws_boto_cfg", aws_boto_cfg))
+
+        aws_region = kwargs.get('aws_region',None)
+        self.logger.debug("%s: [%s]" % ("aws_region", aws_region))
+        
+        # validate credentials first of all
+        self.__load_credentials__(aws_boto_cfg)
+        
+        
+        self.logger.info("Attempting to connect to EC2 region [%s]..." % aws_region)
+        
+        # region not specified - try to use last one (which might not be set)
+        if not aws_region:
+            aws_region = self.region     
+        
+        if not aws_region:
+            raise Exception("%s: %s - AWS region not specified or blank: [%s]" % (self.__class__.__name__ , inspect.stack()[0][3], aws_region))
+        
+        self.region = aws_region
+        
         try:
             #self.conn = EC2Connection()
             self.logger.setLevel(logging.ERROR)
             self.conn = ec2.connect_to_region(aws_region)  
             self.logger.setLevel(self.log_level)
-            self.__is_connected__ = True
             self.logger.info("Connected to EC2")
         except Exception, e:
             raise Exception("Failed to connect to EC2: [%s]" % e)
+        
+        if not self.conn:
+            raise Exception("boto connect to EC2 region: [%s] failed" % aws_region)
             
-        return self.__is_connected__
 
 
     def get_instances(self):
         """Create connection object and attempt connection
         Cache doesn't work coz of Pickle error (can't serialize boto objects)
         """
-        self.logger.debug("Attempting to get a list of EC2 instances...")
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
 #        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
 #        self.logger.debug("   checking cache, key: [%s]" % cache_key)
 #        instances = cache.get(cache_key) 
@@ -67,6 +88,10 @@ class BotoHelperEC2(object):
 #            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
 #            return instances
 #        self.logger.debug("   cache empty, contacting EC2..")
+
+        if not self.is_connected():
+            self.logger.warning("Attempt to call get_instances when not connected.  Trying to connect...")
+            self.connect()
 
         self.logger.setLevel(logging.ERROR)
         reservations = self.conn.get_all_instances()
@@ -83,13 +108,76 @@ class BotoHelperEC2(object):
         return instances
 
 
+    def get_region(self):
+        """Create connection object and attempt connection
+        Cache doesn't work coz of Pickle error (can't serialize boto objects)
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+#        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
+#        self.logger.debug("   checking cache, key: [%s]" % cache_key)
+#        instances = cache.get(cache_key) 
+#        if instances is not None:
+#            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
+#            return instances
+#        self.logger.debug("   cache empty, contacting EC2..")
+
+        self.logger.setLevel(logging.ERROR)
+#        region = self.conn.get_region(self.region)
+#        print region
+        self.logger.setLevel(self.log_level)
+
+        return region
+
 
 
     def is_connected(self):
         """Returns True or False
         """
-        return self.__is_connected__
+        if self.conn:
+            return True
+        
+        return False
+    
+    
+    
+    def __load_credentials__(self, cfg_file=None):
+        """ Validate and load boto options, including credentials 
+        Config: http://boto.cloudhackers.com/en/latest/ref/pyami.html#module-boto.pyami.config
+        """
+        self.logger.debug("%s::%s (%s) starting..." %  (self.__class__.__name__ , inspect.stack()[0][3], cfg_file)) 
 
+        self.cfg_file = None    
+        
+        # get $BOTO_CONFIG
+        boto_config_value = os.getenv("BOTO_CONFIG")
+        
+        # warn if BOTO_CONFIG not the same as our boto config
+        if cfg_file and boto_config_value:
+            if cfg_file != boto_config_value:
+                self.logger.warning("BOTO_CONFIG (%s) != aws_boto_cfg file (%s) - using aws_boto_cfg file" % 
+                                    (boto_config_value, cfg_file))
+        
+        # check if we have any config file specified at all
+        if not cfg_file:
+            if boto_config_value:
+                self.logger.warning("aws_boto_cfg file not specified, will use $BOTO_CONFIG (%s)" % boto_config_value)
+                cfg_file = boto_config_value
+            else:
+                raise Exception("aws_boto_cfg not specified in cfg and $BOTO_CONFIG not defined either, cannot continue")
+                
+            
+        # we will not check if file exists / is readable etc... 
+        # hopefully config will throw exception or something...
+        #config.dump()
+        try:
+            config.load_from_path(cfg_file)
+        except Exception, e:
+            raise Exception("Failed to load boto config file: [%s], error: [%s]" % (cfg_file, e))            
+        #config.dump()
+        self.cfg_file = cfg_file
+
+    
+    
 
 class DaBotoS3(object):
     """Our boto S3 wrapper
