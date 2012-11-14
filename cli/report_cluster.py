@@ -10,6 +10,7 @@ import sys
 import logging
 import os
 import inspect
+from operator import itemgetter, attrgetter
 import helpers.cdh_aws_helper
 
 
@@ -38,6 +39,10 @@ def mainRun(opts, parser):
         logger.setLevel("INFO")
     logger.info("%s starting..." % inspect.stack()[0][3])
     
+    # some vars...
+    output = list()        # capture output in a list of lines so we can output at the end / to a file
+    
+    
     logger.debug("creating CdhAwsHelper object...") 
     cdh_config_file = opts.cfg
     
@@ -52,12 +57,17 @@ def mainRun(opts, parser):
     # list instances
     composite_instances = cdh_aws_helper.get_instances()
     
-    for k,instance in composite_instances.iteritems():
-        aws_name = instance.aws_instance.__dict__['tags']['Name']
-        print aws_name
+    output.append(" ------------------- CDH roles per AWS instance name -----------------")
+    for instance in sorted(composite_instances.itervalues(),key=attrgetter("aws_instance_name")):
+        print instance.aws_instance.__dict__['tags']['Name']
+        output.append(instance.aws_instance_name)
     
     
-    
+    # and output - currently just stdout
+    print " "
+    print " "
+    for line in output:
+        print line
         
     logger.info("all done")   
 
