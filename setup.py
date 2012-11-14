@@ -14,6 +14,6 @@ setup(
     install_requires=[
         "simplejson>=2.5.2",
         "boto>=2.6",
-        "cm_api>=2.0.0",
+        "cm_api==2.0.0",
     ],
 )

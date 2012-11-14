@@ -3,13 +3,10 @@
 __author__ = "Andrew Szymanski ()"
 __version__ = "0.1"
 
-"""Post vote test harness
+""" main script / example how to use CdhAwsHelper
 """
 import sys
 import logging
-import simplejson as json
-import urllib    
-import urllib2
 import os
 import inspect
 import helpers.cdh_aws_helper

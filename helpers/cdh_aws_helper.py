@@ -135,6 +135,14 @@ class CdhAwsHelper(object):
             self.__boto_ec2__.get_instances()
         except Exception, e:
             raise Exception("Failed to connect to boto, error: [%s]" % (e))
+        
+    
+    def connect(self):
+        """ connect to both boto and CM API
+        """
+        self.cm_connect()
+        self.boto_connect()
+        
 
 
     def reload_composite_data(self):
