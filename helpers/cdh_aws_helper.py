@@ -40,9 +40,9 @@ class CdhAwsHelper(object):
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
         # initialize variables - so all are listed here for convenience
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
-        self.cm_cdh = None
-        self.boto_ec2 = None
-        self.instances = CdhAwsInstances(logger=self.logger)
+        self.__cm_cdh__ = None
+        self.__boto_ec2__ = None
+        self.__instances__ = CdhAwsInstances(logger=self.logger)
         
 
     def configure(self, cfg=None):
@@ -91,17 +91,17 @@ class CdhAwsHelper(object):
         
         # and now create api object
         self.__is_connected__ = False
-        self.cm_cdh = cm_helper.ClouderaManagerHelper(logger=self.logger)
+        self.__cm_cdh__ = cm_helper.ClouderaManagerHelper(logger=self.logger)
         
         try:
-            self.cm_cdh.connect(cm_hostname=self.dict_config[CM_HOSTNAME],
+            self.__cm_cdh__.connect(cm_hostname=self.dict_config[CM_HOSTNAME],
                                 username=self.dict_config[CM_USERNAME], 
                                 password=self.dict_config[CM_PASSWORD])
         except Exception, e:
             raise Exception("Failed to connect to CM on [%s], error: [%s]" % (self.dict_config[CM_HOSTNAME],e))
             
         #
-        if not self.cm_cdh:
+        if not self.__cm_cdh__:
             raise Exception("Failed to connect to CM on [%s]" % (self.dict_config[CM_HOSTNAME]))
 
         # the above doesn't mean anything - try connection to make sure all is well
@@ -125,14 +125,14 @@ class CdhAwsHelper(object):
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
         self.logger.info("connecting to boto, region: [%s]" % self.dict_config[AWS_REGION])
         
-        self.boto_ec2 = boto_helper.BotoHelperEC2(logger=self.logger,aws_region=self.dict_config[AWS_REGION])
-        if not self.boto_ec2:
+        self.__boto_ec2__ = boto_helper.BotoHelperEC2(logger=self.logger,aws_region=self.dict_config[AWS_REGION])
+        if not self.__boto_ec2__:
             raise Exception("Failed to create boto object, cfg: [%s]" % (self.dict_config[AWS_BOTO_CFG],e))
 
         try:
-            self.boto_ec2.connect(aws_boto_cfg=self.dict_config[AWS_BOTO_CFG], aws_region=self.dict_config[AWS_REGION])
-            #self.boto_ec2.get_region()
-            self.boto_ec2.get_instances()
+            self.__boto_ec2__.connect(aws_boto_cfg=self.dict_config[AWS_BOTO_CFG], aws_region=self.dict_config[AWS_REGION])
+            #self.__boto_ec2__.get_region()
+            self.__boto_ec2__.get_instances()
         except Exception, e:
             raise Exception("Failed to connect to boto, error: [%s]" % (e))
 
@@ -145,11 +145,9 @@ class CdhAwsHelper(object):
         # we will use AWS instances as a authoritative list of instances
         # get list of all hosts
         self.logger.info("reloading CDH / AWS data...")
-        cm_hosts = self.cm_cdh.get_instances()
-        self.logger.info("[%s] CDH hosts identified" % (len(cm_hosts)) )
-        
-        
-        self.instances.reload(cm_hosts)
+        cm_hosts = self.__cm_cdh__.get_instances()
+        self.__instances__.reload(cm_hosts)
+        self.logger.info("[%s] CDH hosts reloaded" % (len(self.__instances__)) )
 
 
 
@@ -157,7 +155,7 @@ class CdhAwsHelper(object):
         """ get list of clusters
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-        list_clusters = self.cm_cdh.get_clusters()
+        list_clusters = self.__cm_cdh__.get_clusters()
         return list_clusters  
         
 
@@ -168,25 +166,15 @@ class CdhAwsHelper(object):
         aws_region = self.dict_config[AWS_REGION]
         return aws_region  
         
-
-#    def get_instances(self):
-#        """Create connection object and attempt connection
-#        Cache doesn't work coz of Pickle error (can't serialize boto objects)
-#        """
-#        self.logger.debug("Attempting to get a list of EC2 instances...")
-##        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
-##        self.logger.debug("   checking cache, key: [%s]" % cache_key)
-##        instances = cache.get(cache_key) 
-##        if instances is not None:
-##            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
-##            return instances
-##        self.logger.debug("   cache empty, contacting EC2..")
-#
-#        
-#        self.logger.debug("[%s] instances found" % len(instances)) 
-##        cache.set(cache_key, instances, 60 * 5)
-#        return instances
-
+    def get_instances(self, key=None):
+        """ get a dict of composite instance data
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        return self.__instances__
+        
+        
+        
+        
 
 
 class CdhAwsInstances:
@@ -207,7 +195,7 @@ class CdhAwsInstances:
         self.logger.debug("%s: initialised" % (self.__class__.__name__))
 
     
-    def reload(self, cm_instances=None):
+    def reload(self, cm_instances=None, aws_instances=None):
         """ add / refresh CdhAwsInstance object
         """
         self.logger.debug("%s::%s starting..." % (self.__class__.__name__, inspect.stack()[0][3]))
@@ -233,7 +221,24 @@ class CdhAwsInstances:
         self.logger.info("Reloaded combined CDH/AWS data: [%s] instances found" % len(self.__instances__) )
         
         
-        
+    def __len__(self): 
+        """ returns number of instances
+        """
+        return len(self.__instances__) 
+
+    def __iter__(self): 
+        """ returns number of instances
+        """
+        return iter(self.__instances__) 
+    
+
+    def iteritems(self): 
+        """ returns number of instances
+        """
+        return self.__instances__.iteritems() 
+    
+    
+    
 
 class CdhAwsInstance:
     ''' Single Intance object - CM and boto combined data
@@ -241,6 +246,7 @@ class CdhAwsInstance:
     def __init__(self, *args, **kwargs):
         """Create an object
         """
+        self.private_dns_name  = None
 
 
     def populate(self, *args, **kwargs):

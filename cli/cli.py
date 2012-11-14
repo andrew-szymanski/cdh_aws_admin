@@ -85,6 +85,16 @@ class Manager(object):
         self.cdh_aws_helper.reload_composite_data()
         
 
+    def get_instances(self):
+        """ load composite (combined) CDH / AWS data
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        instances = self.cdh_aws_helper.get_instances()
+        return instances
+        
+        
+        
+
 #                      **********************************************************
 #                      **** mainRun - parse args and decide what to do
 #                      **********************************************************
@@ -98,10 +108,10 @@ def mainRun(opts, parser):
     logger.info("%s starting..." % inspect.stack()[0][3])
     
     logger.debug("creating CLI object...") 
-    cdh_manager = Manager(logger=logger)
+    cdh_aws_manager = Manager(logger=logger)
     logger.debug("setting up Manager...") 
     try:
-        cdh_manager.configure(**opts.__dict__)
+        cdh_aws_manager.configure(**opts.__dict__)
     except Exception, e:
         logger.error("%s" % e)
         parser.print_help()
@@ -109,7 +119,17 @@ def mainRun(opts, parser):
     
     # and load composite data (CDH and AWS combined)
     logger.debug("loading composite CHD/AWS data...") 
-    cdh_manager.reload_composite_data()        
+    cdh_aws_manager.reload_composite_data()    
+    
+    # list instances
+    composite_instances = cdh_aws_manager.get_instances()
+    
+    for k,instance in composite_instances.iteritems():
+        print type(instance)
+    
+    
+    
+        
     logger.info("all done")   
 
 
@@ -133,7 +153,7 @@ def main(argv=None):
     # cat options
     cat_options = OptionGroup(parser, "options")
     cat_options.add_option("-d", "--debug", help="debug logging, specify any value to enable debug, omit this param to disable, example: --debug=False", default=False)
-    cat_options.add_option("-c", "--cfg", help="Config for CDH Manager API, boto and everything else, KEY=VALUE format, example: -c $HOME/.passwords/cdh_manager.config", default=None)
+    cat_options.add_option("-c", "--cfg", help="Config for CDH Manager API, boto and everything else, KEY=VALUE format, example: -c $HOME/.passwords/cdh_aws_manager.config", default=None)
     parser.add_option_group(cat_options)
 
     try: 
