@@ -40,7 +40,7 @@ class CdhAwsHelper(object):
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
         # initialize variables - so all are listed here for convenience
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
-        self.cm_api = None
+        self.cm_cdh = None
         self.boto_ec2 = None
         self.instances = CdhAwsInstances(logger=self.logger)
         
@@ -72,7 +72,7 @@ class CdhAwsHelper(object):
             raise Exception("Could not read config file: [%s], error: [%s]" % (cfg, e))
         
         # validate all params
-        keys = [CM_HOSTNAME, CM_USERNAME, CM_PASSWORD, AWS_REGION]
+        keys = [CM_HOSTNAME, CM_USERNAME, CM_PASSWORD, AWS_REGION, AWS_BOTO_CFG]
         for key in keys:
             value = new_dict.get(key, None)
             if not value:
@@ -91,13 +91,17 @@ class CdhAwsHelper(object):
         
         # and now create api object
         self.__is_connected__ = False
+        self.cm_cdh = cm_helper.ClouderaManagerHelper(logger=self.logger)
+        
         try:
-            self.cm_api = ApiResource(self.dict_config[CM_HOSTNAME], username=self.dict_config[CM_USERNAME], password=self.dict_config[CM_PASSWORD])
+            self.cm_cdh.connect(cm_hostname=self.dict_config[CM_HOSTNAME],
+                                username=self.dict_config[CM_USERNAME], 
+                                password=self.dict_config[CM_PASSWORD])
         except Exception, e:
             raise Exception("Failed to connect to CM on [%s], error: [%s]" % (self.dict_config[CM_HOSTNAME],e))
             
         #
-        if not self.cm_api:
+        if not self.cm_cdh:
             raise Exception("Failed to connect to CM on [%s]" % (self.dict_config[CM_HOSTNAME]))
 
         # the above doesn't mean anything - try connection to make sure all is well
@@ -141,7 +145,7 @@ class CdhAwsHelper(object):
         # we will use AWS instances as a authoritative list of instances
         # get list of all hosts
         self.logger.info("reloading CDH / AWS data...")
-        cm_hosts = self.cm_api.get_all_hosts()
+        cm_hosts = self.cm_cdh.get_instances()
         self.logger.info("[%s] CDH hosts identified" % (len(cm_hosts)) )
         
         
@@ -153,7 +157,7 @@ class CdhAwsHelper(object):
         """ get list of clusters
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-        list_clusters = self.cm_api.get_all_clusters()
+        list_clusters = self.cm_cdh.get_clusters()
         return list_clusters  
         
 
