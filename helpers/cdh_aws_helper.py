@@ -133,6 +133,11 @@ class CdhAwsHelper(object):
             raise Exception("Failed to connect to boto, error: [%s]" % (e))
 
 
+    def load_composite_data(self):
+        """ load composite (combined) CDH / AWS data
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+
 
 
     def get_clusters(self):
@@ -151,30 +156,22 @@ class CdhAwsHelper(object):
         return aws_region  
         
 
-    def get_instances(self):
-        """Create connection object and attempt connection
-        Cache doesn't work coz of Pickle error (can't serialize boto objects)
-        """
-        self.logger.debug("Attempting to get a list of EC2 instances...")
-#        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
-#        self.logger.debug("   checking cache, key: [%s]" % cache_key)
-#        instances = cache.get(cache_key) 
-#        if instances is not None:
-#            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
-#            return instances
-#        self.logger.debug("   cache empty, contacting EC2..")
-
-        
-        self.logger.debug("[%s] instances found" % len(instances)) 
-#        cache.set(cache_key, instances, 60 * 5)
-        return instances
-
-
-
-
-    def is_connected(self):
-        """Returns True or False
-        """
-        return self.__is_connected__
+#    def get_instances(self):
+#        """Create connection object and attempt connection
+#        Cache doesn't work coz of Pickle error (can't serialize boto objects)
+#        """
+#        self.logger.debug("Attempting to get a list of EC2 instances...")
+##        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
+##        self.logger.debug("   checking cache, key: [%s]" % cache_key)
+##        instances = cache.get(cache_key) 
+##        if instances is not None:
+##            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
+##            return instances
+##        self.logger.debug("   cache empty, contacting EC2..")
+#
+#        
+#        self.logger.debug("[%s] instances found" % len(instances)) 
+##        cache.set(cache_key, instances, 60 * 5)
+#        return instances
 
 

@@ -78,19 +78,12 @@ class Manager(object):
             raise Exception("error while trying to configure CdhAwsHelper: [%s]" % e)
         
 
+    def load_composite_data(self):
+        """ load composite (combined) CDH / AWS data
+        """
+        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        self.cdh_aws_helper.load_composite_data()
         
-        # config boto
-#        aws_region = self.cm_helper.get_aws_region()
-#        self.logger.info("configuring Boto helper for region: [%s]..." % (aws_region))
-#        self.logger.debug("%s creating object..." % (LOG_INDENT))
-#        self.ec2_helper = helpers.boto_helper.BotoHelperEC2(logger=logger)
-#        cdh_config_file = kwargs.get('cfg', None)
-        #self.ec2_helper = helpers.boto_helper.BotoHelperEC2(logger=logger,aws_region=aws_region)
-        
-        
-
-
-
 
 #                      **********************************************************
 #                      **** mainRun - parse args and decide what to do
@@ -113,7 +106,10 @@ def mainRun(opts, parser):
         logger.error("%s" % e)
         parser.print_help()
         sys.exit(1)
-            
+    
+    # and load composite data (CDH and AWS combined)
+    logger.debug("loading composite CHD/AWS data...") 
+    cdh_manager.load_composite_data()        
     logger.debug("all done")   
 
 
