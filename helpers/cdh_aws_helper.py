@@ -43,6 +43,7 @@ class CdhAwsHelper(object):
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
         self.cm_api = None
         self.boto_ec2 = None
+        self.instances = CdhAwsInstances(logger=self.logger)
         
 
     def configure(self, cfg=None):
@@ -137,6 +138,11 @@ class CdhAwsHelper(object):
         """ load composite (combined) CDH / AWS data
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
+        
+        # we will use AWS instances as a authoritative list of instances
+        # get list of all hosts
+        hosts = self.cm_api.get_all_hosts()
+        self.logger.debug("  [%s] hosts retrieved from CM" % len(hosts))
 
 
 
@@ -175,3 +181,39 @@ class CdhAwsHelper(object):
 #        return instances
 
 
+
+class CdhAwsInstances:
+    ''' Container containing composite AWS / CDH data for of all CDH instances
+    dictionary of CdhAwsInstance objects, keyed by internal IP 
+    '''
+    def __init__(self, *args, **kwargs):
+        """Create an object and attach or initialize logger
+        """
+        self.logger = kwargs.get('logger',None)
+        if not self.logger:
+            raise Exception("You must pass logger to %s.%s or change class itself.." % (self.__class__.__name__, inspect.stack()[0][3]))
+        
+        # member variables
+        self.__data__ = dict()                   # key - internal ip, value - CdhAwsInstance object
+
+        # finito
+        self.logger.debug("%s: initialised" % (self.__class__.__name__))
+
+    
+    def add(self, instance=None):
+        """ add / refresh CdhAwsInstance object
+        """
+        self.logger.debug("%s::%s starting..." % (self.__class__.__name__, inspect.stack()[0][3]))
+
+
+class CdhAwsInstance:
+    ''' Single Intance object - CM and boto combined data
+    '''
+    def __init__(self, *args, **kwargs):
+        """Create an object
+        """
+        # member variables
+        self.__data__ = dict()                   # final data for JSON, all data will be wrapped in this
+
+
+    
