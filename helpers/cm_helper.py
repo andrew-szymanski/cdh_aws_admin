@@ -95,7 +95,7 @@ class ClouderaManagerHelper(object):
         """ Get all CDH hosts
         """
         self.logger.debug("Attempting to get a list of CDH hosts...")
-        instances = self.api.get_all_hosts()
+        instances = self.api.get_all_hosts(view="full")
         self.logger.debug("[%s] instances found" % len(instances)) 
         return instances
 

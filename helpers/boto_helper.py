@@ -79,14 +79,6 @@ class BotoHelperEC2(object):
         Cache doesn't work coz of Pickle error (can't serialize boto objects)
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-#        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
-#        self.logger.debug("   checking cache, key: [%s]" % cache_key)
-#        instances = cache.get(cache_key) 
-#        if instances is not None:
-#            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
-#            return instances
-#        self.logger.debug("   cache empty, contacting EC2..")
-
         if not self.is_connected():
             self.logger.warning("Attempt to call get_instances when not connected.  Trying to connect...")
             self.connect()

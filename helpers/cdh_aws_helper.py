@@ -146,7 +146,8 @@ class CdhAwsHelper(object):
         # get list of all hosts
         self.logger.info("reloading CDH / AWS data...")
         cm_hosts = self.__cm_cdh__.get_instances()
-        self.__instances__.reload(cm_hosts)
+        aws_instances = self.__boto_ec2__.get_instances()
+        self.__instances__.reload(cm_hosts, aws_instances)
         self.logger.info("[%s] CDH hosts reloaded" % (len(self.__instances__)) )
 
 
@@ -179,7 +180,7 @@ class CdhAwsHelper(object):
 
 class CdhAwsInstances:
     ''' Container containing composite AWS / CDH data for of all CDH instances
-    dictionary of CdhAwsInstance objects, keyed by internal IP 
+    dictionary of CdhAwsInstance objects, keyed by private_dns_name
     '''
     def __init__(self, *args, **kwargs):
         """Create an object and attach or initialize logger
@@ -200,6 +201,7 @@ class CdhAwsInstances:
         """
         self.logger.debug("%s::%s starting..." % (self.__class__.__name__, inspect.stack()[0][3]))
         self.logger.debug("[%s] CDH instances" % (len(cm_instances)) )
+        self.logger.debug("[%s] All AWS instances" % (len(aws_instances)) )
         
         # create a new dict coz it is faster then clearing.. not that it matters with our poxy tiny data....
         self.__instances__ = dict()
@@ -213,12 +215,33 @@ class CdhAwsInstances:
         for host in cm_instances:
             hostname = host.hostname
             instance = CdhAwsInstance()
-            instance.populate(private_dns_name=hostname)
+            instance.populate(private_dns_name=hostname, cdh_host=host)
             # and create / udpate dict entry
             self.__instances__[instance.private_dns_name] = instance
             
+        # go through a list of AWS instances, matching them to CDH instances
+        for aws_instance in aws_instances:
+            private_dns_name = aws_instance.private_dns_name
+            self.logger.debug("   AWS instance: [%s]" % private_dns_name)
+            try:
+                cdh_aws_instance = self.__instances__[private_dns_name]
+            except KeyError:
+                self.logger.debug("      skipped (not CDH,)")
+                continue
+            
+            # save ref to boto EC2 object
+            self.logger.debug("      added")
+            cdh_aws_instance.aws_instance = aws_instance
+            
+        # check for CDH instances without AWS data
+        aws_count = 0
+        for instance in self.__instances__.itervalues():
+            if not instance.aws_instance:
+                self.logger.error("CDH instance [%s], no AWS instance found, unpredictable results might occur")
+            else:
+                aws_count = aws_count + 1
         
-        self.logger.info("Reloaded combined CDH/AWS data: [%s] instances found" % len(self.__instances__) )
+        self.logger.info("Reloaded combined CDH/AWS data: [%s] CDH and [%s] AWS instances matched" % (len(self.__instances__), aws_count) )
         
         
     def __len__(self): 
@@ -246,7 +269,9 @@ class CdhAwsInstance:
     def __init__(self, *args, **kwargs):
         """Create an object
         """
-        self.private_dns_name  = None
+        self.private_dns_name  = None    # AWS private hostname
+        self.cdh_host = None             # Cloudera Manager API ApiHost object
+        self.aws_instance = None         # boto AWS EC2 object
 
 
     def populate(self, *args, **kwargs):
@@ -257,6 +282,10 @@ class CdhAwsInstance:
         self.private_dns_name = kwargs.get('private_dns_name',None)
         if not self.private_dns_name:
             raise Exception("%s.%s passed private_dns_name NULL" % (self.__class__.__name__, inspect.stack()[0][3]))
+        
+        self.cdh_host = kwargs.get('cdh_host',None)
+        self.aws_instance = kwargs.get('aws_instance',None)
+        
             
 
     

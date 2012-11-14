@@ -125,7 +125,8 @@ def mainRun(opts, parser):
     composite_instances = cdh_aws_manager.get_instances()
     
     for k,instance in composite_instances.iteritems():
-        print type(instance)
+        #print instance.aws_instance.__dict__
+        pass
     
     
     
@@ -139,8 +140,7 @@ def mainRun(opts, parser):
 # tested / use cases:
 # ./cli.py
 # ./cli.py  --debug=Y
-# alias d='cli/cli.py -d Y -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
-# alias a='cli/cli.py  -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
+# alias d='cli/cli.py -d Y -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg';alias a='cli/cli.py  -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
 
 def main(argv=None):
     from optparse import OptionParser, OptionGroup
