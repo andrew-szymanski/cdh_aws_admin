@@ -110,7 +110,7 @@ class BotoHelperEC2(object):
             
          
 #       cache.set(cache_key, instances, 60 * 5)
-        self.logger.debug("[%s] RUNNING instances found" % len(running_instances))
+        self.logger.info("[%s] RUNNING instances found" % len(running_instances))
         return running_instances
 
 

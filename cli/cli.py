@@ -55,7 +55,7 @@ class Manager(object):
         cdh_config_file = kwargs.get('cfg', None)
         
         # Composite Cloudera Manager API / AWS boto helper
-        self.cdh_aws_helper = helpers.cdh_aws_helper.CdhAwsHelper(logger=logger)
+        self.cdh_aws_helper = helpers.cdh_aws_helper.CdhAwsHelper(logger=self.logger)
         try:
             self.cdh_aws_helper.configure(cfg=cdh_config_file)
         except Exception, e:
@@ -78,11 +78,11 @@ class Manager(object):
             raise Exception("error while trying to configure CdhAwsHelper: [%s]" % e)
         
 
-    def load_composite_data(self):
+    def reload_composite_data(self):
         """ load composite (combined) CDH / AWS data
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-        self.cdh_aws_helper.load_composite_data()
+        self.cdh_aws_helper.reload_composite_data()
         
 
 #                      **********************************************************
@@ -109,8 +109,8 @@ def mainRun(opts, parser):
     
     # and load composite data (CDH and AWS combined)
     logger.debug("loading composite CHD/AWS data...") 
-    cdh_manager.load_composite_data()        
-    logger.debug("all done")   
+    cdh_manager.reload_composite_data()        
+    logger.info("all done")   
 
 
 
@@ -119,8 +119,8 @@ def mainRun(opts, parser):
 # tested / use cases:
 # ./cli.py
 # ./cli.py  --debug=Y
-# alias a='cli/cli.py -d Y -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
-
+# alias d='cli/cli.py -d Y -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
+# alias a='cli/cli.py  -c $HOME/.passwords/cdh-manager.cip.prod.eu-west-1.cfg'
 
 def main(argv=None):
     from optparse import OptionParser, OptionGroup

@@ -28,7 +28,6 @@ class CdhAwsHelper(object):
         """
         self.__is_connected__ = False
         self.logger = kwargs.get('logger',None)
-        self.log_level = kwargs.get('log_level',logging.DEBUG)
         if ( self.logger is None ):
             # Get an instance of a logger
             console = logging.StreamHandler()
@@ -36,8 +35,8 @@ class CdhAwsHelper(object):
             console.setFormatter(formatter)
             logging.getLogger('').addHandler(console)
             self.logger = logging.getLogger('')
+            self.logger.setLevel(logging.INFO)
         # initial log entry
-        self.logger.setLevel(self.log_level)
         self.logger.debug("%s: %s version [%s]" % (self.__class__.__name__, inspect.getfile(inspect.currentframe()),__version__))
         # initialize variables - so all are listed here for convenience
         self.dict_config = {}   # dictionary, see cdh_manager.cfg example
@@ -134,15 +133,19 @@ class CdhAwsHelper(object):
             raise Exception("Failed to connect to boto, error: [%s]" % (e))
 
 
-    def load_composite_data(self):
+    def reload_composite_data(self):
         """ load composite (combined) CDH / AWS data
         """
         self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
         
         # we will use AWS instances as a authoritative list of instances
         # get list of all hosts
-        hosts = self.cm_api.get_all_hosts()
-        self.logger.debug("  [%s] hosts retrieved from CM" % len(hosts))
+        self.logger.info("reloading CDH / AWS data...")
+        cm_hosts = self.cm_api.get_all_hosts()
+        self.logger.info("[%s] CDH hosts identified" % (len(cm_hosts)) )
+        
+        
+        self.instances.reload(cm_hosts)
 
 
 
@@ -194,17 +197,39 @@ class CdhAwsInstances:
             raise Exception("You must pass logger to %s.%s or change class itself.." % (self.__class__.__name__, inspect.stack()[0][3]))
         
         # member variables
-        self.__data__ = dict()                   # key - internal ip, value - CdhAwsInstance object
+        self.__instances__ = dict()                   # key - internal ip, value - CdhAwsInstance object
 
         # finito
         self.logger.debug("%s: initialised" % (self.__class__.__name__))
 
     
-    def add(self, instance=None):
+    def reload(self, cm_instances=None):
         """ add / refresh CdhAwsInstance object
         """
         self.logger.debug("%s::%s starting..." % (self.__class__.__name__, inspect.stack()[0][3]))
-
+        self.logger.debug("[%s] CDH instances" % (len(cm_instances)) )
+        
+        # create a new dict coz it is faster then clearing.. not that it matters with our poxy tiny data....
+        self.__instances__ = dict()
+        
+        # and validate only now - so we never point to the old data... even if new is empty / invalid
+        if not cm_instances:
+            self.logger.warning("no CDH hosts passed")
+            return
+        
+        # loop through CM hosts and create key / value entries
+        for host in cm_instances:
+            hostname = host.hostname
+            instance = CdhAwsInstance()
+            instance.populate(private_dns_name=hostname)
+            # and create / udpate dict entry
+            self.__instances__[instance.private_dns_name] = instance
+            
+        
+        self.logger.info("Reloaded combined CDH/AWS data: [%s] instances found" % len(self.__instances__) )
+        
+        
+        
 
 class CdhAwsInstance:
     ''' Single Intance object - CM and boto combined data
@@ -212,8 +237,16 @@ class CdhAwsInstance:
     def __init__(self, *args, **kwargs):
         """Create an object
         """
-        # member variables
-        self.__data__ = dict()                   # final data for JSON, all data will be wrapped in this
 
+
+    def populate(self, *args, **kwargs):
+        """ populate object with data
+        """
+        
+        # hostname - this is AWS internal hostname
+        self.private_dns_name = kwargs.get('private_dns_name',None)
+        if not self.private_dns_name:
+            raise Exception("%s.%s passed private_dns_name NULL" % (self.__class__.__name__, inspect.stack()[0][3]))
+            
 
     
