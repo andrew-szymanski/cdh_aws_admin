@@ -63,10 +63,8 @@ class BotoHelperEC2(object):
         self.region = aws_region
         
         try:
-            #self.conn = EC2Connection()
-            self.logger.setLevel(logging.ERROR)
+            # if log level debug - enable logging for boto as well
             self.conn = ec2.connect_to_region(aws_region)  
-            self.logger.setLevel(self.log_level)
             self.logger.info("Connected to EC2")
         except Exception, e:
             raise Exception("Failed to connect to EC2: [%s]" % e)
@@ -93,9 +91,7 @@ class BotoHelperEC2(object):
             self.logger.warning("Attempt to call get_instances when not connected.  Trying to connect...")
             self.connect()
 
-        self.logger.setLevel(logging.ERROR)
         reservations = self.conn.get_all_instances()
-        self.logger.setLevel(self.log_level)
         self.logger.debug("[%s] reservations found" % len(reservations))
         # get all instances
         instances = list()
@@ -103,31 +99,19 @@ class BotoHelperEC2(object):
             reser_instances = reser.instances
             instances.extend(reser_instances)
         
-        self.logger.debug("[%s] instances found" % len(instances)) 
+        self.logger.debug("[%s] instances found" % len(instances))
+        
+        # and get only running instances
+        running_instances = list()
+        for instance in instances:
+            if ( instance.state != "running"):
+                continue
+            running_instances.append(instance)
+            
+         
 #        cache.set(cache_key, instances, 60 * 5)
-        return instances
-
-
-    def get_region(self):
-        """Create connection object and attempt connection
-        Cache doesn't work coz of Pickle error (can't serialize boto objects)
-        """
-        self.logger.debug("%s::%s starting..." %  (self.__class__.__name__ , inspect.stack()[0][3])) 
-#        cache_key = "%s-%s" % (self.__class__.__name__ , inspect.stack()[0][3])
-#        self.logger.debug("   checking cache, key: [%s]" % cache_key)
-#        instances = cache.get(cache_key) 
-#        if instances is not None:
-#            self.logger.debug("   returning cache content, [%s] instances found" % len(instances) )
-#            return instances
-#        self.logger.debug("   cache empty, contacting EC2..")
-
-        self.logger.setLevel(logging.ERROR)
-#        region = self.conn.get_region(self.region)
-#        print region
-        self.logger.setLevel(self.log_level)
-
-        return region
-
+        self.logger.debug("[%s] RUNNING instances found" % len(running_instances))
+        return running_instances
 
 
     def is_connected(self):
