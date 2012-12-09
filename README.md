@@ -22,3 +22,8 @@ either:
 or:
 
    ./cli/cli.py -b $HOME/.passwords/boto.cfg
+   
+   
+Report on combined CDH / AWS info
+==============   
+./cli/report_cluster.py --cfg ~/.cfg/cdh-manager.cluster-x.cfg   
