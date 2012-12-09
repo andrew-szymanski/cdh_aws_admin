@@ -66,14 +66,15 @@ def mainRun(opts, parser):
             role_name = role_entry['roleName']
             service_name = role_entry['serviceName']
             output.append("%s role: [%s] (%s)" % (LOG_INDENT, role_name, service_name))
-    
-    
+            
     # and output - currently just stdout
     print " "
     print " "
     for line in output:
         print line
         
+    logger.info("")   
+    logger.info("")   
     logger.info("all done")   
 
 

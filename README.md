@@ -3,8 +3,12 @@ cdh_aws_admin
 
 Combine Cloudera API with Amazon AWS API to manage and query CDH clusters on EC2 instances
 
-Cloudera (CDH) API: http://cloudera.github.com/cm_api/apidocs/v1/index.html
-Amazon AWS boto: http://boto.cloudhackers.com/en/latest/
+Cloudera (CDH) API: 
+http://cloudera.github.com/cm_api/apidocs/v1/index.html
+https://github.com/cloudera/cm_api
+
+Amazon AWS boto: 
+http://boto.cloudhackers.com/en/latest/
 
 
 install from source
