@@ -59,8 +59,13 @@ def mainRun(opts, parser):
     
     output.append(" ------------------- CDH roles per AWS instance name -----------------")
     for instance in sorted(composite_instances.itervalues(),key=attrgetter("aws_instance_name")):
-        print instance.aws_instance.__dict__['tags']['Name']
-        output.append(instance.aws_instance_name)
+        #print instance.aws_instance.__dict__['tags']['Name']
+        output.append("%s (%s / %s)" % (instance.aws_instance_name, instance.aws_instance.public_dns_name,
+                                        instance.aws_instance.private_dns_name))
+        for role_entry in instance.cdh_host.roleRefs:
+            role_name = role_entry['roleName']
+            service_name = role_entry['serviceName']
+            output.append("%s role: [%s] (%s)" % (LOG_INDENT, role_name, service_name))
     
     
     # and output - currently just stdout
