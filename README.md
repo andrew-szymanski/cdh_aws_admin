@@ -13,8 +13,7 @@ http://boto.cloudhackers.com/en/latest/
 
 install from source
 =============
-cd $SOURCE
-sudo pip install -e .
+cd $SOURCE;sudo pip install -e .
 
 
 Boto config
